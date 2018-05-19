@@ -1,4 +1,4 @@
-package org.mdkt.compiler;
+package ng.com.idempotent;
 
 import javax.tools.SimpleJavaFileObject;
 import java.io.IOException;
@@ -7,9 +7,9 @@ import java.net.URI;
 /**
  * Created by trung on 5/3/15.
  */
-public class SourceCode extends SimpleJavaFileObject {
+public final class SourceCode extends SimpleJavaFileObject {
 	private String contents = null;
-	private String className;
+	private final String className;
 
 	public SourceCode(String className, String contents) throws Exception {
 		super(URI.create("string:///" + className.replace('.', '/')

@@ -1,5 +1,7 @@
 package org.mdkt.compiler;
 
+import ng.com.idempotent.InMemoryJavaCompiler;
+import ng.com.idempotent.CompilationException;
 import java.util.List;
 import java.util.Map;
 
@@ -11,107 +13,108 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class InMemoryJavaCompilerTest {
-	private static final Logger logger = LoggerFactory.getLogger(InMemoryJavaCompilerTest.class);
 
-	@Rule
-	public ExpectedException thrown = ExpectedException.none();
+    private static final Logger logger = LoggerFactory.getLogger(InMemoryJavaCompilerTest.class);
 
-	@Test
-	public void compile_WhenTypical() throws Exception {
-		StringBuffer sourceCode = new StringBuffer();
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
-		sourceCode.append("package org.mdkt;\n");
-		sourceCode.append("public class HelloClass {\n");
-		sourceCode.append("   public String hello() { return \"hello\"; }");
-		sourceCode.append("}");
+    @Test
+    public void compile_WhenTypical() throws Exception {
+        StringBuffer sourceCode = new StringBuffer();
 
-		Class<?> helloClass = InMemoryJavaCompiler.newInstance().compile("org.mdkt.HelloClass", sourceCode.toString());
-		Assert.assertNotNull(helloClass);
-		Assert.assertEquals(1, helloClass.getDeclaredMethods().length);
-	}
+        sourceCode.append("package org.mdkt;\n");
+        sourceCode.append("public class HelloClass {\n");
+        sourceCode.append("   public String hello() { return \"hello\"; }");
+        sourceCode.append("}");
 
-	@Test
-	public void compileAll_WhenTypical() throws Exception {
-		String cls1 = "public class A{ public B b() { return new B(); }}";
-		String cls2 = "public class B{ public String toString() { return \"B!\"; }}";
+        Class<?> helloClass = InMemoryJavaCompiler.newInstance().compile("org.mdkt.HelloClass", sourceCode.toString());
+        Assert.assertNotNull(helloClass);
+        Assert.assertEquals(1, helloClass.getDeclaredMethods().length);
+    }
 
-		Map<String, Class<?>> compiled = InMemoryJavaCompiler.newInstance().addSource("A", cls1).addSource("B", cls2).compileAll();
+    @Test
+    public void compileAll_WhenTypical() throws Exception {
+        String cls1 = "public class A{ public B b() { return new B(); }}";
+        String cls2 = "public class B{ public String toString() { return \"B!\"; }}";
 
-		Assert.assertNotNull(compiled.get("A"));
-		Assert.assertNotNull(compiled.get("B"));
+        Map<String, Class<?>> compiled = InMemoryJavaCompiler.newInstance().addSource("A", cls1).addSource("B", cls2).compileAll();
 
-		Class<?> aClass = compiled.get("A");
-		Object a = aClass.newInstance();
-		Assert.assertEquals("B!", aClass.getMethod("b").invoke(a).toString());
-	}
+        Assert.assertNotNull(compiled.get("A"));
+        Assert.assertNotNull(compiled.get("B"));
 
-	@Test
-	public void compile_WhenSourceContainsInnerClasses() throws Exception {
-		StringBuffer sourceCode = new StringBuffer();
+        Class<?> aClass = compiled.get("A");
+        Object a = aClass.newInstance();
+        Assert.assertEquals("B!", aClass.getMethod("b").invoke(a).toString());
+    }
 
-		sourceCode.append("package org.mdkt;\n");
-		sourceCode.append("public class HelloClass {\n");
-		sourceCode.append("   private static class InnerHelloWorld { int inner; }\n");
-		sourceCode.append("   public String hello() { return \"hello\"; }");
-		sourceCode.append("}");
+    @Test
+    public void compile_WhenSourceContainsInnerClasses() throws Exception {
+        StringBuffer sourceCode = new StringBuffer();
 
-		Class<?> helloClass = InMemoryJavaCompiler.newInstance().compile("org.mdkt.HelloClass", sourceCode.toString());
-		Assert.assertNotNull(helloClass);
-		Assert.assertEquals(1, helloClass.getDeclaredMethods().length);
-	}
+        sourceCode.append("package org.mdkt;\n");
+        sourceCode.append("public class HelloClass {\n");
+        sourceCode.append("   private static class InnerHelloWorld { int inner; }\n");
+        sourceCode.append("   public String hello() { return \"hello\"; }");
+        sourceCode.append("}");
 
-	@Test
-	public void compile_whenError() throws Exception {
-		thrown.expect(CompilationException.class);
-		thrown.expectMessage("Unable to compile the source");
-		StringBuffer sourceCode = new StringBuffer();
+        Class<?> helloClass = InMemoryJavaCompiler.newInstance().compile("org.mdkt.HelloClass", sourceCode.toString());
+        Assert.assertNotNull(helloClass);
+        Assert.assertEquals(1, helloClass.getDeclaredMethods().length);
+    }
 
-		sourceCode.append("package org.mdkt;\n");
-		sourceCode.append("public classHelloClass {\n");
-		sourceCode.append("   public String hello() { return \"hello\"; }");
-		sourceCode.append("}");
-		InMemoryJavaCompiler.newInstance().compile("org.mdkt.HelloClass", sourceCode.toString());
-	}
+    @Test
+    public void compile_whenError() throws Exception {
+        thrown.expect(CompilationException.class);
+        thrown.expectMessage("Unable to compile the source");
+        StringBuffer sourceCode = new StringBuffer();
 
-	@Test
-	public void compile_WhenFailOnWarnings() throws Exception {
-		thrown.expect(CompilationException.class);
-		StringBuffer sourceCode = new StringBuffer();
+        sourceCode.append("package org.mdkt;\n");
+        sourceCode.append("public classHelloClass {\n");
+        sourceCode.append("   public String hello() { return \"hello\"; }");
+        sourceCode.append("}");
+        InMemoryJavaCompiler.newInstance().compile("org.mdkt.HelloClass", sourceCode.toString());
+    }
 
-		sourceCode.append("package org.mdkt;\n");
-		sourceCode.append("public class HelloClass {\n");
-		sourceCode.append("   public java.util.List<String> hello() { return new java.util.ArrayList(); }");
-		sourceCode.append("}");
-		InMemoryJavaCompiler.newInstance().compile("org.mdkt.HelloClass", sourceCode.toString());
-	}
+    @Test
+    public void compile_WhenFailOnWarnings() throws Exception {
+        thrown.expect(CompilationException.class);
+        StringBuffer sourceCode = new StringBuffer();
 
-	@Test
-	public void compile_WhenIgnoreWarnings() throws Exception {
-		StringBuffer sourceCode = new StringBuffer();
+        sourceCode.append("package org.mdkt;\n");
+        sourceCode.append("public class HelloClass {\n");
+        sourceCode.append("   public java.util.List<String> hello() { return new java.util.ArrayList(); }");
+        sourceCode.append("}");
+        InMemoryJavaCompiler.newInstance().compile("org.mdkt.HelloClass", sourceCode.toString());
+    }
 
-		sourceCode.append("package org.mdkt;\n");
-		sourceCode.append("public class HelloClass {\n");
-		sourceCode.append("   public java.util.List<String> hello() { return new java.util.ArrayList(); }");
-		sourceCode.append("}");
-		Class<?> helloClass = InMemoryJavaCompiler.newInstance().ignoreWarnings().compile("org.mdkt.HelloClass", sourceCode.toString());
-		List<?> res = (List<?>) helloClass.getMethod("hello").invoke(helloClass.newInstance());
-		Assert.assertEquals(0, res.size());
-	}
+    @Test
+    public void compile_WhenIgnoreWarnings() throws Exception {
+        StringBuffer sourceCode = new StringBuffer();
 
-	@Test
-	public void compile_WhenWarningsAndErrors() throws Exception {
-		thrown.expect(CompilationException.class);
-		StringBuffer sourceCode = new StringBuffer();
+        sourceCode.append("package org.mdkt;\n");
+        sourceCode.append("public class HelloClass {\n");
+        sourceCode.append("   public java.util.List<String> hello() { return new java.util.ArrayList(); }");
+        sourceCode.append("}");
+        Class<?> helloClass = InMemoryJavaCompiler.newInstance().ignoreWarnings().compile("org.mdkt.HelloClass", sourceCode.toString());
+        List<?> res = (List<?>) helloClass.getMethod("hello").invoke(helloClass.newInstance());
+        Assert.assertEquals(0, res.size());
+    }
 
-		sourceCode.append("package org.mdkt;\n");
-		sourceCode.append("public class HelloClass extends xxx {\n");
-		sourceCode.append("   public java.util.List<String> hello() { return new java.util.ArrayList(); }");
-		sourceCode.append("}");
-		try {
-			InMemoryJavaCompiler.newInstance().compile("org.mdkt.HelloClass", sourceCode.toString());
-		} catch (Exception e) {
-			logger.info("Exception caught: {}", e);
-			throw e;
-		}
-	}
+    @Test
+    public void compile_WhenWarningsAndErrors() throws Exception {
+        thrown.expect(CompilationException.class);
+        StringBuffer sourceCode = new StringBuffer();
+
+        sourceCode.append("package org.mdkt;\n");
+        sourceCode.append("public class HelloClass extends xxx {\n");
+        sourceCode.append("   public java.util.List<String> hello() { return new java.util.ArrayList(); }");
+        sourceCode.append("}");
+        try {
+            InMemoryJavaCompiler.newInstance().compile("org.mdkt.HelloClass", sourceCode.toString());
+        } catch (Exception e) {
+            logger.info("Exception caught: {}", e);
+            throw e;
+        }
+    }
 }
